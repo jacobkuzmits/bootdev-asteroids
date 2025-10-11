@@ -1,16 +1,31 @@
-import pygame
 import sys
-from constants import *
-from player import Player
+import pygame
+
 from asteroid import Asteroid
 from asteroidfield import AsteroidField
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH
+from player import Player
 from shot import Shot
 
 
-def main():
+def handle_collisions(
+    player: Player, asteroids: pygame.sprite.Group, shots: pygame.sprite.Group
+) -> None:
+    for asteroid in asteroids.sprites():
+        if asteroid.is_colliding_with(player):
+            print("Game over!")
+            sys.exit()
+        for shot in shots.sprites():
+            if asteroid.is_colliding_with(shot):
+                asteroid.split()
+                shot.kill()
+                break
+
+
+def main() -> None:
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
-    dt = 0
+    dt = 0.0
 
     updatable = pygame.sprite.Group()
     drawable = pygame.sprite.Group()
@@ -23,7 +38,7 @@ def main():
     Shot.containers = (shots, updatable, drawable)
 
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
-    asteroidField = AsteroidField()
+    AsteroidField()
 
     while True:
         for event in pygame.event.get():
@@ -31,15 +46,8 @@ def main():
                 return
         screen.fill("black")
         updatable.update(dt)
-        for asteroid in asteroids:
-            if asteroid.isCollidingWith(player):
-                print("Game over!")
-                sys.exit()
-            for shot in shots:
-                if asteroid.isCollidingWith(shot):
-                    asteroid.split()
-                    shot.kill()
-        for sprite in drawable:
+        handle_collisions(player, asteroids, shots)
+        for sprite in drawable.sprites():
             sprite.draw(screen)
         pygame.display.flip()
         dt = clock.tick(60) / 1000
